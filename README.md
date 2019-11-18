@@ -1,4 +1,3 @@
 # A2Text-Net
-
-
-wsdfghfdsdfgb
+This is a paper entitled "A2Text-Net: A Novel Deep Neural Network for Sarcasm Detection", accepted by 2019 IEEE CogMI.
+Abstract: Sarcasm is a common form of irony in which users usually express their negative attitudes using contrary words. Predicting sarcasm is an essential part of investigating human social interaction. Improvements in classifying sarcasm have the potential to improve other dimensions of human sentiment (e.g., brand preference, political views). In face-to-face communication, the changing of voice, eye contact, physical position, etc. provides the audience with cues to detect sarcasm. However, detecting sarcasm exclusively with text is particularly challenging, given the lack of these subtle human-centric cues. In this study, we employed a new deep neural network: A2Text-Net to mimic the face-to-face speech, which integrates auxiliary variables such as punctuations, part of speech (POS), numeral, emoji, etc. to increase classification performance. The experiment results provide evidence that our A2Text-Net approach improves classification performance over conventional machine learning and deep learning algorithms.
