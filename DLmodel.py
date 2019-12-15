@@ -135,300 +135,8 @@ def precision_recall(model, X_test, y_test):
     precision, recall,f1, _ = precision_recall_fscore_support(y_test, y_score,average='weighted',labels=np.unique(y_score))
 #     average_precision = average_precision_score(y_test.ravel(), y_score.ravel())
     return precision, recall,f1, _
-
-
-# In[5]:
-
-
-df = pd.read_csv('ghosh data.csv', encoding='latin-1')
-
-
-# In[6]:
-
-
-df = df[['text', 'sarcasm']]
-
-EMB_DIMMAX_WORDS = 20000
-
-tok = Tokenizer(num_words = 10000) # keeping 10000 now for first iteration
-tok.fit_on_texts(df.text)
-seqs = tok.texts_to_sequences(df.text)
-
-# Find length of sentence 
-df['length'] = df['text'].apply(lambda x: len(x.split(' ')))
-
-
-# In[7]:
-
-
-max(df['length'])
-
-
-MAX_SEQ_LENGTH = 327
-data = pad_sequences(seqs, MAX_SEQ_LENGTH)
-labels = np.asarray(df.sarcasm)
-data.shape
-
-
-def logsitic():
-    model = Sequential()
-    model.add(Embedding(input_dim=MAX_WORDS,output_dim=EMB_DIM, input_length=MAX_SEQ_LENGTH))
-    model.add(Flatten())
-    model.add(Dense(1,  # output dim is 2, one score per each class
-                activation='sigmoid',
-                kernel_regularizer=L1L2(l1=0.0, l2=0.5),
-                input_dim=3)) 
-    model.compile(optimizer='rmsprop',
-              loss='binary_crossentropy',
-              metrics=['accuracy'])
-    return model
-
-
-# In[14]:
-
-
-from keras.regularizers import L1L2
-Dense_FPR = []
-
-Dense_TPR = []
-
-Dense_ROC = []
-
-Dense_Recall = []
-
-Dense_f1 = []
-tprs= []
-
-Dense_Precision=[]
-# dense_fpr,dense_tpr,dense_roc_auc = TPR_FPR(fcmod,x_val,y_val)
-# lst_fpr,lst_tpr,lst_roc_auc = TPR_FPR(lsmod, x_val, y_val)
-# conv_fpr,conv_tpr,conv_roc_auc  = TPR_FPR(convmod, x_val, y_val)
-# congru_fpr,congru_tpr,congru_roc_auc  = TPR_FPR(convgrumod, x_val, y_val)
-# log_fpr,log_tpr,log_auc=TPR_FPR(log,x_val,y_val)
-
-
-mean_tpr = 0.0
-mean_fpr = np.linspace(0, 1, 100)
-
-
-kf = StratifiedKFold(n_splits=5, random_state=20, shuffle=True)
-for train_index, test_index in kf.split(data,labels):
-    X_train, X_test = data[train_index], data[test_index]
-    y_train, y_test = labels[train_index], labels[test_index]
-    
-    
-    logmod = logsitic()
-    fchist= logmod.fit(X_train, y_train,
-         epochs = 10,
-         batch_size = 256,
-         validation_data = (X_test, y_test))
-    
-    
-#     print(classification_report(y_test,fcmod.predict(X_test).argmax(axis=-1)))
-    
-    dense_fpr,dense_tpr,dense_roc_auc = TPR_FPR(logmod,X_test, y_test)
-    precision, recall,f1,_ = precision_recall(logmod,X_test, y_test)
-    tprs.append(interp(mean_fpr, dense_fpr, dense_tpr))
-    Dense_Recall.append(recall)
-    Dense_f1.append(f1)
-    Dense_Precision.append(precision)
-    Dense_FPR.append(dense_fpr)
-    Dense_TPR.append(dense_tpr)
-    Dense_ROC.append(dense_roc_auc)
-
-
-# In[15]:
-
-
-print("The Five-Cross Validation Average F1 Score is " , Average(Dense_f1))
-print("The Five-Cross Validation Average Precesion Score is " , Average(Dense_Precision))
-print("The Five-Cross Validation Average Recall Score is " , Average(Dense_Recall))
-print("The Five-Cross Validation Average ROC Score is " , Average(Dense_ROC))
-
-
-# In[16]:
-
-
-EMB_DIM = 6
-MAX_WORDS=10000
-def fcmodel():
-    model = Sequential()
-    model.add(Embedding(input_dim=MAX_WORDS, output_dim= EMB_DIM, input_length=MAX_SEQ_LENGTH))    
-    
-    # Flatten Layer
-    model.add(Flatten())
-    
-    # FC1
-    model.add(Dense(64, activation='relu'))
-    model.add(Dropout(0.2))
-    
-    # Output layer
-    model.add(Dense(1, activation='sigmoid'))
-    
-    # print model summary
-#     model.summary()
-    
-    # When using pretrained embeddings
-    #model.layers[0].set_weights([embedding_matrix])
-    #model.layers[0].trainable = False
-              
-    # Compile the model
-    model.compile(optimizer = 'rmsprop',
-                 loss = 'binary_crossentropy',
-                 metrics = ['acc'])
-    return model
-
-
-# In[17]:
-
-
-from sklearn.model_selection import StratifiedKFold
-Dense_FPR = []
-
-Dense_TPR = []
-
-Dense_ROC = []
-
-Dense_Recall = []
-
-Dense_f1 = []
-tprs= []
-
-Dense_Precision=[]
-# dense_fpr,dense_tpr,dense_roc_auc = TPR_FPR(fcmod,x_val,y_val)
-# lst_fpr,lst_tpr,lst_roc_auc = TPR_FPR(lsmod, x_val, y_val)
-# conv_fpr,conv_tpr,conv_roc_auc  = TPR_FPR(convmod, x_val, y_val)
-# congru_fpr,congru_tpr,congru_roc_auc  = TPR_FPR(convgrumod, x_val, y_val)
-# log_fpr,log_tpr,log_auc=TPR_FPR(log,x_val,y_val)
-
-
-mean_tpr = 0.0
-mean_fpr = np.linspace(0, 1, 100)
-
-
-kf = StratifiedKFold(n_splits=5, random_state=20, shuffle=True)
-for train_index, test_index in kf.split(data,labels):
-    X_train, X_test = data[train_index], data[test_index]
-    y_train, y_test = labels[train_index], labels[test_index]
-    
-    fcmod = fcmodel()
-    fchist= fcmod.fit(X_train, y_train,
-         epochs = 10,
-         batch_size = 256,
-         validation_data = (X_test, y_test))
-    
-    
-#     print(classification_report(y_test,fcmod.predict(X_test).argmax(axis=-1)))
-    
-    dense_fpr,dense_tpr,dense_roc_auc = TPR_FPR(fcmod,X_test, y_test)
-    precision, recall,f1,_ = precision_recall(fcmod,X_test, y_test)
-    tprs.append(interp(mean_fpr, dense_fpr, dense_tpr))
-    Dense_Recall.append(recall)
-    Dense_f1.append(f1)
-    Dense_Precision.append(precision)
-    Dense_FPR.append(dense_fpr)
-    Dense_TPR.append(dense_tpr)
-    Dense_ROC.append(dense_roc_auc)
-
-
-# In[18]:
-
-
-print("The Five-Cross Validation Average F1 Score is " , Average(Dense_f1))
-print("The Five-Cross Validation Average Precesion Score is " , Average(Dense_Precision))
-print("The Five-Cross Validation Average Recall Score is " , Average(Dense_Recall))
-print("The Five-Cross Validation Average ROC Score is " , Average(Dense_ROC))
-
-
-# In[19]:
-
-
-def lstm():
-    model = Sequential()
-    
-    model.add(Embedding(input_dim=MAX_WORDS, output_dim=EMB_DIM, input_length=MAX_SEQ_LENGTH))
-    
-    model.add(Bidirectional(LSTM(32, return_sequences=True, recurrent_dropout=0.1, dropout=0.1)))
-    model.add(Dropout(0.2))
-    
-    model.add(Bidirectional(LSTM(32, recurrent_dropout=0.1, dropout=0.1)))
-    model.add(Dropout(0.2))
-    
-    model.add(Dense(1, activation='sigmoid'))
-    
-    # Compile the model
-    model.compile(optimizer = 'rmsprop',
-                  loss = 'binary_crossentropy',
-                  metrics = ['acc'])
-    
-    return model
-
-
-# In[21]:
-
-
-Dense_FPR = []
-
-Dense_TPR = []
-
-Dense_ROC = []
-
-Dense_Recall = []
-
-Dense_f1 = []
-tprs= []
-
-Dense_Precision=[]
-# dense_fpr,dense_tpr,dense_roc_auc = TPR_FPR(fcmod,x_val,y_val)
-# lst_fpr,lst_tpr,lst_roc_auc = TPR_FPR(lsmod, x_val, y_val)
-# conv_fpr,conv_tpr,conv_roc_auc  = TPR_FPR(convmod, x_val, y_val)
-# congru_fpr,congru_tpr,congru_roc_auc  = TPR_FPR(convgrumod, x_val, y_val)
-# log_fpr,log_tpr,log_auc=TPR_FPR(log,x_val,y_val)
-
-
-mean_tpr = 0.0
-mean_fpr = np.linspace(0, 1, 100)
-
-
-kf = StratifiedKFold(n_splits=5, random_state=20, shuffle=True)
-for train_index, test_index in kf.split(data,labels):
-    X_train, X_test = data[train_index], data[test_index]
-    y_train, y_test = labels[train_index], labels[test_index]
-    lsmod = lstm()
-    fchist= lsmod.fit(X_train, y_train,
-         epochs = 10,
-         batch_size = 256,
-         validation_data = (X_test, y_test))
-    
-    dense_fpr,dense_tpr,dense_roc_auc = TPR_FPR(lsmod,X_test, y_test)
-    precision, recall,f1,_ = precision_recall(lsmod,X_test, y_test)
-    tprs.append(interp(mean_fpr, dense_fpr, dense_tpr))
-    Dense_Recall.append(recall)
-    Dense_f1.append(f1)
-    Dense_Precision.append(precision)
-    Dense_FPR.append(dense_fpr)
-    Dense_TPR.append(dense_tpr)
-    Dense_ROC.append(dense_roc_auc)
-
-
-# In[22]:
-
-
-print("The Five-Cross Validation Average F1 Score is " , Average(Dense_f1))
-print("The Five-Cross Validation Average Precesion Score is " , Average(Dense_Precision))
-print("The Five-Cross Validation Average Recall Score is " , Average(Dense_Recall))
-print("The Five-Cross Validation Average ROC Score is " , Average(Dense_ROC))
-
-
-# In[23]:
-
-
 df = pd.read_csv('ghosh data.csv', encoding='latin-1')
 df.head()
-
-
-# In[24]:
-
 
 df["S_Quotations"] = df.text.str.count("\'")
 df["Quotations"] = df.text.str.count('"')
@@ -458,15 +166,7 @@ df["youfangkkuahao"]=df.text.str.count(']')
 df["zuofangkuahao"]=df.text.str.count('\[')
 df["shuxian"]=df.text.str.count('\|')
 
-
-# In[25]:
-
-
 punc = df[["S_Quotations","Quotations","Comma","Dash","Colon","Period","Dollor","Question","jinghao","shangyinhao","xiahuaxian","at","gantan","star","and","youkuahao","zuokuahao","xie","fenhao","percent","equal","plus","bolang","guaihao","youfangkkuahao","zuofangkuahao","shuxian"]].values
-
-
-# In[26]:
-
 
 sar_news = []
 for rows in range(0, df.shape[0]):
@@ -474,20 +174,12 @@ for rows in range(0, df.shape[0]):
     head_txt = head_txt.split(" ")
     sar_news.append(head_txt)
 
-
-# In[27]:
-
-
 from nltk.tag import pos_tag, map_tag
 pos_sarc = []
 for i in sar_news:
     pos_sarc.append(pos_tag([j for j in i if j]))
 
 print(pos_sarc)
-
-
-# In[28]:
-
 
 new_pos = []
 all_in = []
@@ -499,15 +191,7 @@ for i in pos_sarc:
     new_pos.append(tep)
 print(len(new_pos))
 
-
-# In[29]:
-
-
 np.unique(all_in,return_counts = True)
-
-
-# In[30]:
-
 
 def count_pos(text, target):
     temp = []
@@ -606,7 +290,6 @@ def A2Text():
     meta_input = Input(shape=(62,), name='meta_input')
     emb = Embedding(output_dim=EMB_DIM, input_dim=MAX_WORDS, input_length=MAX_SEQ_LENGTH)(nlp_input)
     flat_out = Flatten()(emb)
-# nlp_out = Bidirectional(LSTM(16, dropout=0.3, recurrent_dropout=0.3,))(emb)
     x_con = Concatenate(axis=-1)([flat_out, meta_input])
     x_con=Dense(64, activation='relu')(x_con)
     x_con=Dropout(0.2)(x_con)
@@ -614,23 +297,10 @@ def A2Text():
     # Output layer
     model_con = Model(inputs=[nlp_input , meta_input], outputs=[x_con])
 
-  
-    # print model summary
-#     model.summary()
-    
-    # When using pretrained embeddings
-    #model.layers[0].set_weights([embedding_matrix])
-    #model.layers[0].trainable = False
-              
-    # Compile the model
     model_con.compile(optimizer = 'rmsprop',
                  loss = 'binary_crossentropy',
                  metrics = ['acc'])
     return model_con
-
-
-# In[43]:
-
 
 def precision_recall2(model, X_test, y_test):
     y_score = model.predict(X_test)
